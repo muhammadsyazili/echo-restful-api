@@ -37,12 +37,7 @@ func StoreAccount(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
-	student_id, err := strconv.Atoi(c.FormValue("student_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
-	result, err := models.StoreAccount(username, password, student_id)
+	result, err := models.StoreAccount(username, password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
@@ -56,15 +51,10 @@ func UpdateAccount(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	student_id, err := strconv.Atoi(c.Param("student_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
-
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
-	result, err := models.UpdateAccount(id, username, password, student_id)
+	result, err := models.UpdateAccount(id, username, password)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}

@@ -11,9 +11,8 @@ import (
 
 type Account struct {
 	Id         int    	`json:"id"`
-	Username   string 	`json:"username" validate:"required,min=5"`
+	Username   string 	`json:"username" validate:"required,unique,min=5,max=50"`
 	Password   string 	`json:"password" validate:"required,min=5"`
-	Student_id int 		`json:"student_id" validate:"required,numeric"`
 }
 
 func GetAllAccount() (Response, error) {
@@ -32,7 +31,7 @@ func GetAllAccount() (Response, error) {
 	}
 
 	for rows.Next() {
-		err = rows.Scan(&obj.Id, &obj.Username, &obj.Password, &obj.Student_id)
+		err = rows.Scan(&obj.Id, &obj.Username, &obj.Password)
 		if err != nil {
 			return res, err
 		}
@@ -41,7 +40,7 @@ func GetAllAccount() (Response, error) {
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "Success"
+	res.Message = "ok"
 	res.Data = arrobj
 
 	return res, nil
@@ -56,19 +55,19 @@ func GetWhereAccount(id int) (Response, error) {
 	
 	sqlQuery := "SELECT * FROM accounts WHERE id = ?"
 
-	err := conn.QueryRow(sqlQuery, id).Scan(&obj.Id, &obj.Username, &obj.Password, &obj.Student_id)
+	err := conn.QueryRow(sqlQuery, id).Scan(&obj.Id, &obj.Username, &obj.Password)
 	if err != nil {
 		return res, err
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "Success"
+	res.Message = "ok"
 	res.Data = obj
 
 	return res, nil
 }
 
-func StoreAccount(username string, password string, student_id int) (Response, error) {
+func StoreAccount(username string, password string) (Response, error) {
 	var res Response
 
 	//validation input
@@ -77,7 +76,6 @@ func StoreAccount(username string, password string, student_id int) (Response, e
 	data := Account{
 		Username: username,
 		Password: password,
-		Student_id: student_id,
 	}
 
 	err := v.Struct(data)
@@ -93,7 +91,7 @@ func StoreAccount(username string, password string, student_id int) (Response, e
 
 	conn := db.CreateConn()
 
-	sqlQuery := "INSERT accounts (username, password, student_id) VALUES (?, ?, ?)"
+	sqlQuery := "INSERT accounts (username, password) VALUES (?, ?)"
 
 	q, err := conn.Prepare(sqlQuery)
 	defer q.Close()
@@ -101,7 +99,7 @@ func StoreAccount(username string, password string, student_id int) (Response, e
 		return res, err
 	}
 
-	result, err := q.Exec(username, password_hash, student_id)
+	result, err := q.Exec(username, password_hash)
 	if err != nil {
 		return res, err
 	}
@@ -111,16 +109,18 @@ func StoreAccount(username string, password string, student_id int) (Response, e
 		return res, err
 	}
 
+	data.Id = int(lastInsertId)
+	data.Username = username
+	data.Password = password_hash
+
 	res.Status = http.StatusOK
-	res.Message = "Success"
-	res.Data = map[string]int64{
-		"last_insert_id": lastInsertId,
-	}
+	res.Message = "ok"
+	res.Data = data
 
 	return res, nil
 }
 
-func UpdateAccount(id int, username string, password string, student_id int) (Response, error) {
+func UpdateAccount(id int, username string, password string) (Response, error) {
 	var res Response
 	var err error
 
@@ -130,7 +130,6 @@ func UpdateAccount(id int, username string, password string, student_id int) (Re
 	data := Account{
 		Username: username,
 		Password: password,
-		Student_id: student_id,
 	}
 
 	err = v.Struct(data)
@@ -146,7 +145,7 @@ func UpdateAccount(id int, username string, password string, student_id int) (Re
 
 	conn := db.CreateConn()
 
-	sqlQuery := "UPDATE accounts SET username = ?, password = ?, student_id = ? WHERE id = ?"
+	sqlQuery := "UPDATE accounts SET username = ?, password = ? WHERE id = ?"
 
 	q, err := conn.Prepare(sqlQuery)
 	defer q.Close()
@@ -154,21 +153,18 @@ func UpdateAccount(id int, username string, password string, student_id int) (Re
 		return res, err
 	}
 
-	result, err := q.Exec(username, password_hash, student_id, id)
+	_, err = q.Exec(username, password_hash, id)
 	if err != nil {
 		return res, err
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return res, err
-	}
+	data.Id = id
+	data.Username = username
+	data.Password = password_hash
 
 	res.Status = http.StatusOK
 	res.Message = "Success"
-	res.Data = map[string]int64{
-		"rows_affected": rowsAffected,
-	}
+	res.Data = data
 
 	return res, nil
 }
@@ -191,16 +187,13 @@ func DestroyAccount(id int) (Response, error) {
 		return res, err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		return res, err
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "Success"
-	res.Data = map[string]int64{
-		"rows_affected": rowsAffected,
-	}
+	res.Message = "ok"
 
 	return res, nil
 }
