@@ -1,5 +1,30 @@
 # API Spec
 ---
+## Login
+Request :
+- Method : POST
+- Endpoint : `/login`
+- Header : 
+    - Content-Type : application/json
+    - Accept : application/json
+- Body :
+```json
+{
+    "username" : "string|required",
+    "password" : "string|required"
+}
+```
+
+Response :
+```json
+{
+    "status" : "integer",
+    "message" : "string",
+    "data" : {
+        "token" : "string"
+    }
+}
+```
 
 ## Account
 ### Create Account
