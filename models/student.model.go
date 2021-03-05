@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"net/http"
 
 	validator "github.com/go-playground/validator/v10"
@@ -11,13 +10,13 @@ import (
 
 type Student struct {
 	Id      int    `json:"id"`
-	Nama    string `json:"nama" validate:"required"`
+	Nama    string `json:"nama" validate:"required,max=50"`
 	NIM     int `json:"nim" validate:"required,numeric,len=14"`
-	Jurusan string `json:"jurusan" validate:"required"`
+	Jurusan string `json:"jurusan" validate:"required,max=50"`
+	Account_id int `json:"account_id" validate:"required,numeric,min=1,max=11"`
 }
 
 func GetAllStudent() (Response, error) {
-	fmt.Println("sampe model")
 	var obj Student
 	var arrobj []Student
 	var res Response
@@ -33,7 +32,7 @@ func GetAllStudent() (Response, error) {
 	}
 
 	for rows.Next() {
-		err = rows.Scan(&obj.Id, &obj.Nama, &obj.NIM, &obj.Jurusan)
+		err = rows.Scan(&obj.Id, &obj.Nama, &obj.NIM, &obj.Jurusan, &obj.Account_id)
 		if err != nil {
 			return res, err
 		}
@@ -42,7 +41,7 @@ func GetAllStudent() (Response, error) {
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "Success"
+	res.Message = "Ok"
 	res.Data = arrobj
 
 	return res, nil
@@ -57,19 +56,19 @@ func GetWhereStudent(id int) (Response, error) {
 	
 	sqlQuery := "SELECT * FROM students WHERE id = ?"
 
-	err := conn.QueryRow(sqlQuery, id).Scan(&obj.Id, &obj.Nama, &obj.NIM, &obj.Jurusan)
+	err := conn.QueryRow(sqlQuery, id).Scan(&obj.Id, &obj.Nama, &obj.NIM, &obj.Jurusan, &obj.Account_id)
 	if err != nil {
 		return res, err
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "Success"
+	res.Message = "Ok"
 	res.Data = obj
 
 	return res, nil
 }
 
-func StoreStudent(nama string, nim int, jurusan string) (Response, error) {
+func StoreStudent(nama string, nim int, jurusan string, account_id int) (Response, error) {
 	var res Response
 
 	//validation input
@@ -79,6 +78,7 @@ func StoreStudent(nama string, nim int, jurusan string) (Response, error) {
 		Nama: nama,
 		NIM: nim,
 		Jurusan: jurusan,
+		Account_id: account_id,
 	}
 
 	err := v.Struct(data)
@@ -88,7 +88,7 @@ func StoreStudent(nama string, nim int, jurusan string) (Response, error) {
 
 	conn := db.CreateConn()
 
-	sqlQuery := "INSERT students (nama, nim, jurusan) VALUES (?, ?, ?)"
+	sqlQuery := "INSERT students (nama, nim, jurusan, account_id) VALUES (?, ?, ?, ?)"
 
 	q, err := conn.Prepare(sqlQuery)
 	defer q.Close()
@@ -96,7 +96,7 @@ func StoreStudent(nama string, nim int, jurusan string) (Response, error) {
 		return res, err
 	}
 
-	result, err := q.Exec(nama, nim, jurusan)
+	result, err := q.Exec(nama, nim, jurusan, account_id)
 	if err != nil {
 		return res, err
 	}
@@ -106,16 +106,20 @@ func StoreStudent(nama string, nim int, jurusan string) (Response, error) {
 		return res, err
 	}
 
-	res.Status = http.StatusOK
-	res.Message = "Success"
-	res.Data = map[string]int64{
-		"last_insert_id": lastInsertId,
-	}
+	data.Id = int(lastInsertId)
+	data.Nama = nama
+	data.NIM = nim
+	data.Jurusan = jurusan
+	data.Account_id = account_id
+
+	res.Status = http.StatusCreated
+	res.Message = "Created"
+	res.Data = data
 
 	return res, nil
 }
 
-func UpdateStudent(id int, nama string, nim int, jurusan string) (Response, error) {
+func UpdateStudent(id int, nama string, nim int, jurusan string, account_id int) (Response, error) {
 	var res Response
 
 	//validation input
@@ -125,6 +129,7 @@ func UpdateStudent(id int, nama string, nim int, jurusan string) (Response, erro
 		Nama: nama,
 		NIM: nim,
 		Jurusan: jurusan,
+		Account_id: account_id,
 	}
 
 	err := v.Struct(data)
@@ -134,7 +139,7 @@ func UpdateStudent(id int, nama string, nim int, jurusan string) (Response, erro
 
 	conn := db.CreateConn()
 
-	sqlQuery := "UPDATE students SET nama = ?, nim = ?, jurusan = ? WHERE id = ?"
+	sqlQuery := "UPDATE students SET nama = ?, nim = ?, jurusan = ?, account_id = ? WHERE id = ?"
 
 	q, err := conn.Prepare(sqlQuery)
 	defer q.Close()
@@ -142,21 +147,25 @@ func UpdateStudent(id int, nama string, nim int, jurusan string) (Response, erro
 		return res, err
 	}
 
-	result, err := q.Exec(nama, nim, jurusan, id)
+	result, err := q.Exec(nama, nim, jurusan, account_id, id)
 	if err != nil {
 		return res, err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		return res, err
 	}
 
-	res.Status = http.StatusOK
-	res.Message = "Success"
-	res.Data = map[string]int64{
-		"rows_affected": rowsAffected,
-	}
+	data.Id = id
+	data.Nama = nama
+	data.NIM = nim
+	data.Jurusan = jurusan
+	data.Account_id = account_id
+
+	res.Status = http.StatusCreated
+	res.Message = "Updated"
+	res.Data = data
 
 	return res, nil
 }
@@ -179,16 +188,13 @@ func DestroyStudent(id int) (Response, error) {
 		return res, err
 	}
 
-	rowsAffected, err := result.RowsAffected()
+	_, err = result.RowsAffected()
 	if err != nil {
 		return res, err
 	}
 
 	res.Status = http.StatusOK
 	res.Message = "Success"
-	res.Data = map[string]int64{
-		"rows_affected": rowsAffected,
-	}
 
 	return res, nil
 }
