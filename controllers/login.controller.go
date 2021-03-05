@@ -1,25 +1,47 @@
 package controllers
 
 import (
-	"net/http"
+	"fmt"
 	"time"
+	"net/http"
+	"database/sql"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/muhammadsyazili/echo-rest/models"
+	"github.com/muhammadsyazili/echo-rest/helpers"
 )
 
 func CheckLogin(c echo.Context) error {
+	var res models.Response
+
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
-	res, err := models.CheckLogin(username, password)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+	result, err := models.CheckLogin(username, password)
+
+	if err == sql.ErrNoRows {
+		fmt.Println("Username not found!")
+
+		res.Status = http.StatusBadRequest
+		res.Message = err.Error()
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	if !res {
-		return echo.ErrUnauthorized
+	if err != nil {
+		res.Status = http.StatusInternalServerError
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusInternalServerError, res)
+	}
+
+	match, err := helpers.CheckHash(password, result.Password)
+	if !match {
+		fmt.Println("Password and hash does't match!")
+
+		res.Status = http.StatusBadRequest
+		res.Message = err.Error()
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
 	// Create token
@@ -27,15 +49,21 @@ func CheckLogin(c echo.Context) error {
 
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["name"] = username
-	claims["level"] = "admin"
+	claims["id"] = result.Id
+	claims["name"] = result.Username
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+		res.Status = http.StatusInternalServerError
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"token": t})
+	res.Status = http.StatusOK
+	res.Message = "Ok"
+	res.Data = map[string]string{"token": t}
+	return c.JSON(http.StatusOK, res)
 }
