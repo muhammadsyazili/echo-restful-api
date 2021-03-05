@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -9,46 +8,70 @@ import (
 	"github.com/muhammadsyazili/echo-rest/models"
 )
 
+
 func GetAllAccount(c echo.Context) error {
-	fmt.Println("sampe controller")
+	var res models.Response
+
 	result, err := models.GetAllAccount()
+
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+		res.Status = http.StatusInternalServerError
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
 	return c.JSON(http.StatusOK, result)
 }
 
 func GetWhereAccount(c echo.Context) error {
+	var res models.Response
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+		res.Status = http.StatusBadRequest
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusBadRequest, res)
 	}
 	
 	result, err := models.GetWhereAccount(id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+		res.Status = http.StatusInternalServerError
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
 	return c.JSON(http.StatusOK, result)
 }
 
 func StoreAccount(c echo.Context) error {
+	var res models.Response
+
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
 	result, err := models.StoreAccount(username, password)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		res.Status = http.StatusInternalServerError
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusCreated, result)
 }
 
 func UpdateAccount(c echo.Context) error {
+	var res models.Response
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+		res.Status = http.StatusBadRequest
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
 	username := c.FormValue("username")
@@ -56,21 +79,32 @@ func UpdateAccount(c echo.Context) error {
 
 	result, err := models.UpdateAccount(id, username, password)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		res.Status = http.StatusInternalServerError
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusCreated, result)
 }
 
 func DestroyAccount(c echo.Context) error {
+	var res models.Response
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
+		res.Status = http.StatusBadRequest
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
 	result, err := models.DestroyAccount(id)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		res.Status = http.StatusInternalServerError
+		res.Message = err.Error()
+
+		return c.JSON(http.StatusInternalServerError, res)
 	}
 
 	return c.JSON(http.StatusOK, result)

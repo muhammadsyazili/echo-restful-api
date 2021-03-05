@@ -11,7 +11,7 @@ import (
 
 type Account struct {
 	Id         int    	`json:"id"`
-	Username   string 	`json:"username" validate:"required,unique,min=5,max=50"`
+	Username   string 	`json:"username" validate:"required,min=5,max=50"`
 	Password   string 	`json:"password" validate:"required,min=5"`
 }
 
@@ -40,7 +40,7 @@ func GetAllAccount() (Response, error) {
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "ok"
+	res.Message = "Ok"
 	res.Data = arrobj
 
 	return res, nil
@@ -61,7 +61,7 @@ func GetWhereAccount(id int) (Response, error) {
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "ok"
+	res.Message = "Ok"
 	res.Data = obj
 
 	return res, nil
@@ -113,8 +113,8 @@ func StoreAccount(username string, password string) (Response, error) {
 	data.Username = username
 	data.Password = password_hash
 
-	res.Status = http.StatusOK
-	res.Message = "ok"
+	res.Status = http.StatusCreated
+	res.Message = "Created"
 	res.Data = data
 
 	return res, nil
@@ -162,8 +162,8 @@ func UpdateAccount(id int, username string, password string) (Response, error) {
 	data.Username = username
 	data.Password = password_hash
 
-	res.Status = http.StatusOK
-	res.Message = "Success"
+	res.Status = http.StatusCreated
+	res.Message = "Updated"
 	res.Data = data
 
 	return res, nil
@@ -193,7 +193,7 @@ func DestroyAccount(id int) (Response, error) {
 	}
 
 	res.Status = http.StatusOK
-	res.Message = "ok"
+	res.Message = "Deleted"
 
 	return res, nil
 }
