@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 02, 2021 at 05:43 PM
+-- Generation Time: Mar 05, 2021 at 05:50 PM
 -- Server version: 10.4.16-MariaDB
 -- PHP Version: 7.4.12
 
@@ -30,9 +30,15 @@ SET time_zone = "+00:00";
 CREATE TABLE `accounts` (
   `id` int(11) NOT NULL,
   `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `student_id` int(11) NOT NULL
+  `password` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `accounts`
+--
+
+INSERT INTO `accounts` (`id`, `username`, `password`) VALUES
+(1, 'syazili', '$2a$10$LVQok1w5ck.niFwpl4B42OCX3XZv.5aVMsfcdrdZH4Q/wiSBs6en2');
 
 -- --------------------------------------------------------
 
@@ -42,8 +48,9 @@ CREATE TABLE `accounts` (
 
 CREATE TABLE `students` (
   `id` int(11) NOT NULL,
+  `account_id` int(11) NOT NULL,
   `nama` varchar(50) NOT NULL,
-  `nim` varchar(50) NOT NULL,
+  `nim` char(14) NOT NULL,
   `jurusan` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -55,7 +62,8 @@ CREATE TABLE `students` (
 -- Indexes for table `accounts`
 --
 ALTER TABLE `accounts`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `username` (`username`);
 
 --
 -- Indexes for table `students`
@@ -71,7 +79,7 @@ ALTER TABLE `students`
 -- AUTO_INCREMENT for table `accounts`
 --
 ALTER TABLE `accounts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `students`
