@@ -3,16 +3,16 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-
 	"github.com/labstack/echo/v4"
 	"github.com/muhammadsyazili/echo-rest/models"
+	"github.com/muhammadsyazili/echo-rest/template"
 )
 
 
-func GetAllStudent(c echo.Context) error {
-	var res models.Response
+func GetAllTransaction(c echo.Context) error {
+	var res template.Response
 
-	result, err := models.GetAllStudent()
+	result, err := models.GetAllTransaction()
 	if err != nil {
 		res.Status = http.StatusInternalServerError
 		res.Message = err.Error()
@@ -23,8 +23,8 @@ func GetAllStudent(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-func GetWhereStudent(c echo.Context) error {
-	var res models.Response
+func GetWhereTransaction(c echo.Context) error {
+	var res template.Response
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -34,7 +34,7 @@ func GetWhereStudent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 	
-	result, err := models.GetWhereStudent(id)
+	result, err := models.GetWhereTransaction(id)
 	if err != nil {
 		res.Status = http.StatusInternalServerError
 		res.Message = err.Error()
@@ -45,10 +45,10 @@ func GetWhereStudent(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-func StoreStudent(c echo.Context) error {
-	var res models.Response
+func StoreTransaction(c echo.Context) error {
+	var res template.Response
 
-	nim, err := strconv.Atoi(c.Param("nim"))
+	user_id, err := strconv.Atoi(c.Param("user_id"))
 	if err != nil {
 		res.Status = http.StatusBadRequest
 		res.Message = err.Error()
@@ -56,7 +56,7 @@ func StoreStudent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	account_id, err := strconv.Atoi(c.Param("account_id"))
+	amount, err := strconv.ParseFloat(c.Param("amount"), 10)
 	if err != nil {
 		res.Status = http.StatusBadRequest
 		res.Message = err.Error()
@@ -64,10 +64,11 @@ func StoreStudent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	nama := c.FormValue("nama")
-	jurusan := c.FormValue("jurusan")
+	title := c.FormValue("title")
+	time := c.FormValue("time")
+	type_ := c.FormValue("type")
 
-	result, err := models.StoreStudent(nama, nim, jurusan, account_id)
+	result, err := models.StoreTransaction(user_id, title, amount, time, type_)
 	if err != nil {
 		res.Status = http.StatusInternalServerError
 		res.Message = err.Error()
@@ -78,8 +79,8 @@ func StoreStudent(c echo.Context) error {
 	return c.JSON(http.StatusCreated, result)
 }
 
-func UpdateStudent(c echo.Context) error {
-	var res models.Response
+func UpdateTransaction(c echo.Context) error {
+	var res template.Response
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -89,7 +90,7 @@ func UpdateStudent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	nim, err := strconv.Atoi(c.Param("nim"))
+	user_id, err := strconv.Atoi(c.Param("user_id"))
 	if err != nil {
 		res.Status = http.StatusBadRequest
 		res.Message = err.Error()
@@ -97,7 +98,7 @@ func UpdateStudent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	account_id, err := strconv.Atoi(c.Param("account_id"))
+	amount, err := strconv.ParseFloat(c.Param("amount"), 10)
 	if err != nil {
 		res.Status = http.StatusBadRequest
 		res.Message = err.Error()
@@ -105,10 +106,11 @@ func UpdateStudent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	nama := c.FormValue("nama")
-	jurusan := c.FormValue("jurusan")
+	title := c.FormValue("title")
+	time := c.FormValue("time")
+	type_ := c.FormValue("type")
 
-	result, err := models.UpdateStudent(id, nama, nim, jurusan, account_id)
+	result, err := models.UpdateTransaction(id, user_id, title, amount, time, type_)
 	if err != nil {
 		res.Status = http.StatusInternalServerError
 		res.Message = err.Error()
@@ -119,8 +121,8 @@ func UpdateStudent(c echo.Context) error {
 	return c.JSON(http.StatusCreated, result)
 }
 
-func DestroyStudent(c echo.Context) error {
-	var res models.Response
+func DestroyTransaction(c echo.Context) error {
+	var res template.Response
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -130,7 +132,7 @@ func DestroyStudent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, res)
 	}
 
-	result, err := models.DestroyStudent(id)
+	result, err := models.DestroyTransaction(id)
 	if err != nil {
 		res.Status = http.StatusInternalServerError
 		res.Message = err.Error()

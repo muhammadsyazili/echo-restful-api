@@ -14,7 +14,7 @@ func CheckLogin(username string, password string) (Login, error) {
 	conn := db.CreateConn()
 	defer conn.Close()
 	
-	sqlQuery := "SELECT * FROM accounts WHERE username = ?"
+	sqlQuery := "SELECT * FROM users WHERE username = ?"
 
 	err := conn.QueryRow(sqlQuery, username).Scan(&obj.Id, &obj.Username, &obj.Password)
 

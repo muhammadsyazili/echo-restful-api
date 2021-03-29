@@ -5,15 +5,15 @@ import (
 	"time"
 	"net/http"
 	"database/sql"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo/v4"
 	"github.com/muhammadsyazili/echo-rest/models"
 	"github.com/muhammadsyazili/echo-rest/helpers"
+	"github.com/muhammadsyazili/echo-rest/template"
 )
 
 func CheckLogin(c echo.Context) error {
-	var res models.Response
+	var res template.Response
 
 	username := c.FormValue("username")
 	password := c.FormValue("password")
@@ -21,7 +21,7 @@ func CheckLogin(c echo.Context) error {
 	result, err := models.CheckLogin(username, password)
 
 	if err == sql.ErrNoRows {
-		fmt.Println("Username not found!")
+		fmt.Println("User not found!")
 
 		res.Status = http.StatusBadRequest
 		res.Message = err.Error()
@@ -37,7 +37,7 @@ func CheckLogin(c echo.Context) error {
 
 	match, err := helpers.CheckHash(password, result.Password)
 	if !match {
-		fmt.Println("Password and hash does't match!")
+		fmt.Println("User not found!")
 
 		res.Status = http.StatusBadRequest
 		res.Message = err.Error()
@@ -50,10 +50,10 @@ func CheckLogin(c echo.Context) error {
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
 	claims["id"] = result.Id
-	claims["name"] = result.Username
+	claims["username"] = result.Username
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
-	// Generate encoded token and send it as response.
+	// Generate encoded token and sendtemplate.response.
 	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
 		res.Status = http.StatusInternalServerError
