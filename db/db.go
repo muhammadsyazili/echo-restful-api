@@ -31,6 +31,6 @@ func Init()  {
 	}
 }
 
-func CreateConn() *sql.DB {
+func OpenConn() *sql.DB {
 	return db
 }

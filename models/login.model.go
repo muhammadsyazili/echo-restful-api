@@ -11,12 +11,19 @@ type Login struct {
 func CheckLogin(username string, password string) (Login, error) {
 	var obj Login
 
-	conn := db.CreateConn()
-	defer conn.Close()
+	conn := db.OpenConn()
 	
 	sqlQuery := "SELECT * FROM users WHERE username = ?"
 
-	err := conn.QueryRow(sqlQuery, username).Scan(&obj.Id, &obj.Username, &obj.Password)
+	q, err := conn.Prepare(sqlQuery)
+    if err != nil {
+		return obj, err
+    }
+	defer q.Close()
+
+	q.QueryRow(username).Scan(&obj.Id, &obj.Username, &obj.Password)
+
+	//err := conn.QueryRow(sqlQuery, username).Scan(&obj.Id, &obj.Username, &obj.Password)
 
 	if err != nil {
 		return obj, err

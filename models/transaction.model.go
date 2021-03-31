@@ -2,7 +2,6 @@ package models
 
 import (
 	"net/http"
-
 	validator "github.com/go-playground/validator/v10"
 	"github.com/muhammadsyazili/echo-rest/db"
 	"github.com/muhammadsyazili/echo-rest/template"
@@ -15,8 +14,8 @@ type Transaction struct {
 	Amount float64 `json:"amount" validate:"required,numeric"`
 	Time string `json:"time" validate:"required"`
 	Type string `json:"type" validate:"required,oneof=expense revenue"`
-	Created_at string `json:"created_at" validate:"required"`
-	Updated_at string `json:"updated_at" validate:"required"`
+	Created_at string `json:"created_at"`
+	Updated_at string `json:"updated_at"`
 }
 
 func GetAllTransaction() (template.Response, error) {
@@ -24,15 +23,15 @@ func GetAllTransaction() (template.Response, error) {
 	var arrobj []Transaction
 	var res template.Response
 	
-	conn := db.CreateConn()
-
+	conn := db.OpenConn()
+	
 	sqlQuery := "SELECT * FROM transactions"
-
+	
 	rows, err := conn.Query(sqlQuery)
-	defer rows.Close()
 	if err != nil {
 		return res, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		err = rows.Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
@@ -54,15 +53,22 @@ func GetWhereTransaction(Id int) (template.Response, error) {
 	var obj Transaction
 	var res template.Response
 	
-	conn := db.CreateConn()
-	defer conn.Close()
-	
+	conn := db.OpenConn()
+
 	sqlQuery := "SELECT * FROM transactions WHERE id = ?"
 
-	err := conn.QueryRow(sqlQuery, Id).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
-	if err != nil {
+	q, err := conn.Prepare(sqlQuery)
+    if err != nil {
 		return res, err
-	}
+    }
+	defer q.Close()
+
+	q.QueryRow(Id).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
+
+	// err := conn.QueryRow(sqlQuery, Id).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
+	// if err != nil {
+	// 	return res, err
+	// }
 
 	res.Status = http.StatusOK
 	res.Message = "Ok"
@@ -91,15 +97,15 @@ func StoreTransaction(User_id int, Title string, Amount float64, Time string, Ty
 		return res, err
 	}
 
-	conn := db.CreateConn()
+	conn := db.OpenConn()
 
 	sqlQuery := "INSERT transactions (user_id, title, amount, time, type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
 
 	q, err := conn.Prepare(sqlQuery)
-	defer q.Close()
 	if err != nil {
 		return res, err
 	}
+	defer q.Close()
 
 	result, err := q.Exec(User_id, Title, Amount, Time, Type, template.Timestamp, template.Timestamp)
 	if err != nil {
@@ -112,16 +118,21 @@ func StoreTransaction(User_id int, Title string, Amount float64, Time string, Ty
 	}
 
 	//--------------------------------------------------------------------------------------
-
-	conn = db.CreateConn()
-	defer conn.Close()
 	
 	sqlQuery = "SELECT * FROM transactions WHERE id = ?"
 
-	err = conn.QueryRow(sqlQuery, int(lastInsertId)).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
-	if err != nil {
+	q, err = conn.Prepare(sqlQuery)
+    if err != nil {
 		return res, err
-	}
+    }
+	defer q.Close()
+
+	q.QueryRow(int(lastInsertId)).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
+
+	// err = conn.QueryRow(sqlQuery, int(lastInsertId)).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
+	// if err != nil {
+	// 	return res, err
+	// }
 
 	res.Status = http.StatusOK
 	res.Message = "Created"
@@ -150,15 +161,15 @@ func UpdateTransaction(Id int, User_id int, Title string, Amount float64, Time s
 		return res, err
 	}
 
-	conn := db.CreateConn()
+	conn := db.OpenConn()
 
 	sqlQuery := "UPDATE transactions SET user_id = ?, title = ?, amount = ?, time = ?, type = ?, updated_at = ? WHERE id = ?"
 
 	q, err := conn.Prepare(sqlQuery)
-	defer q.Close()
 	if err != nil {
 		return res, err
 	}
+	defer q.Close()
 
 	result, err := q.Exec(User_id, Title, Amount, Time, Type, template.Timestamp, Id)
 	if err != nil {
@@ -171,16 +182,21 @@ func UpdateTransaction(Id int, User_id int, Title string, Amount float64, Time s
 	}
 
 	//--------------------------------------------------------------------------------------
-
-	conn = db.CreateConn()
-	defer conn.Close()
 	
 	sqlQuery = "SELECT * FROM transactions WHERE id = ?"
 
-	err = conn.QueryRow(sqlQuery, Id).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
-	if err != nil {
+	q, err = conn.Prepare(sqlQuery)
+    if err != nil {
 		return res, err
-	}
+    }
+	defer q.Close()
+
+	q.QueryRow(Id).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
+
+	// err = conn.QueryRow(sqlQuery, Id).Scan(&obj.Id, &obj.User_id, &obj.Title, &obj.Amount, &obj.Time, &obj.Type, &obj.Created_at, &obj.Updated_at)
+	// if err != nil {
+	// 	return res, err
+	// }
 
 	res.Status = http.StatusOK
 	res.Message = "Updated"
@@ -192,15 +208,15 @@ func UpdateTransaction(Id int, User_id int, Title string, Amount float64, Time s
 func DestroyTransaction(Id int) (template.Response, error) {
 	var res template.Response
 
-	conn := db.CreateConn()
+	conn := db.OpenConn()
 
 	sqlQuery := "DELETE FROM transactions WHERE id = ?"
 
 	q, err := conn.Prepare(sqlQuery)
-	defer q.Close()
 	if err != nil {
 		return res, err
 	}
+	defer q.Close()
 
 	result, err := q.Exec(Id)
 	if err != nil {

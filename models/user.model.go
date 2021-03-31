@@ -2,6 +2,7 @@ package models
 
 import (
 	"net/http"
+
 	validator "github.com/go-playground/validator/v10"
 	"github.com/muhammadsyazili/echo-rest/db"
 	"github.com/muhammadsyazili/echo-rest/helpers"
@@ -13,9 +14,9 @@ type User struct {
 	Name string `json:"name" validate:"required,max=255"`
 	Username string `json:"username" validate:"required,max=255"`
 	Email string `json:"email" validate:"required,max=255"`
-	Password string `json:"password" validate:"required,max=255"`
-	Created_at string `json:"created_at" validate:"required"`
-	Updated_at string `json:"updated_at" validate:"required"`
+	Password *string `json:"password" validate:"required,max=255"`
+	Created_at string `json:"created_at"`
+	Updated_at string `json:"updated_at"`
 }
 
 func GetAllUser() (template.Response, error) {
@@ -23,15 +24,15 @@ func GetAllUser() (template.Response, error) {
 	var arrobj []User
 	var res template.Response
 	
-	conn := db.CreateConn()
+	conn := db.OpenConn()
 
-	sqlQuery := "SELECT * FROM users"
+	sqlQuery := "SELECT id, name, username, email, created_at, updated_at FROM users"
 
 	rows, err := conn.Query(sqlQuery)
-	defer rows.Close()
 	if err != nil {
 		return res, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		err = rows.Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
@@ -53,15 +54,22 @@ func GetWhereUser(Id int) (template.Response, error) {
 	var obj User
 	var res template.Response
 	
-	conn := db.CreateConn()
-	defer conn.Close()
+	conn := db.OpenConn()
 	
-	sqlQuery := "SELECT * FROM users WHERE id = ?"
+	sqlQuery := "SELECT id, name, username, email, created_at, updated_at FROM users WHERE id = ?"
 
-	err := conn.QueryRow(sqlQuery, Id).Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
-	if err != nil {
+	q, err := conn.Prepare(sqlQuery)
+    if err != nil {
 		return res, err
-	}
+    }
+	defer q.Close()
+
+	q.QueryRow(Id).Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
+
+	// err := conn.QueryRow(sqlQuery, Id).Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
+	// if err != nil {
+	// 	return res, err
+	// }
 
 	res.Status = http.StatusOK
 	res.Message = "Ok"
@@ -81,7 +89,7 @@ func StoreUser(Name string, Username string, Email string, Password string) (tem
 		Name: Name,
 		Username: Username,
 		Email: Email,
-		Password: Password,
+		Password: &Password,
 	}
 
 	err := v.Struct(data)
@@ -95,15 +103,15 @@ func StoreUser(Name string, Username string, Email string, Password string) (tem
 		return res, err
 	}
 
-	conn := db.CreateConn()
+	conn := db.OpenConn()
 
 	sqlQuery := "INSERT users (name, username, email, email_verified_at, password, remember_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 
 	q, err := conn.Prepare(sqlQuery)
-	defer q.Close()
 	if err != nil {
 		return res, err
 	}
+	defer q.Close()
 
 	result, err := q.Exec(Name, Username, Email, nil, Password_hash, nil, template.Timestamp, template.Timestamp)
 	if err != nil {
@@ -116,16 +124,16 @@ func StoreUser(Name string, Username string, Email string, Password string) (tem
 	}
 
 	//--------------------------------------------------------------------------------------
-
-	conn = db.CreateConn()
-	defer conn.Close()
 	
-	sqlQuery = "SELECT * FROM users WHERE id = ?"
+	sqlQuery = "SELECT id, name, username, email, created_at, updated_at FROM users WHERE id = ?"
 
-	err = conn.QueryRow(sqlQuery, int(lastInsertId)).Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
-	if err != nil {
+	q, err = conn.Prepare(sqlQuery)
+    if err != nil {
 		return res, err
-	}
+    }
+	defer q.Close()
+
+	q.QueryRow(int(lastInsertId)).Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
 
 	res.Status = http.StatusOK
 	res.Message = "Created"
@@ -146,7 +154,7 @@ func UpdateUser(Id int, Name string, Username string, Email string, Password str
 		Name: Name,
 		Username: Username,
 		Email: Email,
-		Password: Password,
+		Password: &Password,
 	}
 
 	err = v.Struct(data)
@@ -160,15 +168,15 @@ func UpdateUser(Id int, Name string, Username string, Email string, Password str
 		return res, err
 	}
 
-	conn := db.CreateConn()
+	conn := db.OpenConn()
 
 	sqlQuery := "UPDATE users SET name = ?, username = ?, email = ?, password = ?, updated_at = ? WHERE id = ?"
 
 	q, err := conn.Prepare(sqlQuery)
-	defer q.Close()
 	if err != nil {
 		return res, err
 	}
+	defer q.Close()
 
 	_, err = q.Exec(Name, Username, Email, Password_hash, template.Timestamp, Id)
 	if err != nil {
@@ -176,16 +184,16 @@ func UpdateUser(Id int, Name string, Username string, Email string, Password str
 	}
 
 	//--------------------------------------------------------------------------------------
-
-	conn = db.CreateConn()
-	defer conn.Close()
 	
-	sqlQuery = "SELECT * FROM users WHERE id = ?"
+	sqlQuery = "SELECT id, name, username, email, created_at, updated_at FROM users WHERE id = ?"
 
-	err = conn.QueryRow(sqlQuery, Id).Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
-	if err != nil {
+	q, err = conn.Prepare(sqlQuery)
+    if err != nil {
 		return res, err
-	}
+    }
+	defer q.Close()
+
+	q.QueryRow(Id).Scan(&obj.Id, &obj.Name, &obj.Username, &obj.Email, &obj.Created_at, &obj.Updated_at)
 
 	res.Status = http.StatusOK
 	res.Message = "Updated"
@@ -197,15 +205,15 @@ func UpdateUser(Id int, Name string, Username string, Email string, Password str
 func DestroyUser(Id int) (template.Response, error) {
 	var res template.Response
 
-	conn := db.CreateConn()
+	conn := db.OpenConn()
 
 	sqlQuery := "DELETE FROM users WHERE id = ?"
 
 	q, err := conn.Prepare(sqlQuery)
-	defer q.Close()
 	if err != nil {
 		return res, err
 	}
+	defer q.Close()
 
 	result, err := q.Exec(Id)
 	if err != nil {
